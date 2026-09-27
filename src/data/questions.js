@@ -67,33 +67,33 @@ export const questions789 = [
   },
   {
     id: 7,
-    questionUz: "Advokat nima qiladi?",
-    questionRu: "Что делает адвокат?",
+    questionUz: "Jinoyat va ma’muriy huquqbuzarlikning farqi nima?",
+    questionRu: "В чем разница между преступлением и административным правонарушением?",
     options: [
       { textUz: "Avtomobilni ta’mirlaydi", textRu: "Ремонтирует автомобили", careerId: 3 },
-      { textUz: "Huquqiy yordam beradi", textRu: "Оказывает правовую помощь", careerId: 7 },
+      { textUz: "Jinoyat odatda ijtimoiy xavfliligi yuqoriroq qilmishdir", textRu: "Преступление обычно является деянием с более высокой общественной опасностью", careerId: 7 },
       { textUz: "Vizual dizayn yaratadi", textRu: "Создает визуальный дизайн", careerId: 2 },
       { textUz: "Bino loyihalaydi", textRu: "Проектирует здания", careerId: 4 }
     ]
   },
   {
     id: 8,
-    questionUz: "O‘qituvchi nima qiladi?",
-    questionRu: "Что делает учитель?",
+    questionUz: "Pedagogik metod nima?",
+    questionRu: "Что такое педагогический метод?",
     options: [
       { textUz: "Texnik yechimlar yaratadi", textRu: "Создает технические решения", careerId: 5 },
-      { textUz: "Bilim beradi", textRu: "Дает знания", careerId: 8 },
+      { textUz: "Bilim berish va o‘rgatish usuli", textRu: "Способ передачи знаний и обучения", careerId: 8 },
       { textUz: "Bemorni davolaydi", textRu: "Лечит пациентов", careerId: 6 },
       { textUz: "Biznes yuritadi", textRu: "Ведет бизнес", careerId: 9 }
     ]
   },
   {
     id: 9,
-    questionUz: "Tadbirkor kim?",
-    questionRu: "Кто такой предприниматель?",
+    questionUz: "Biznes-reja nima uchun tuziladi?",
+    questionRu: "Для чего составляется бизнес-план?",
     options: [
       { textUz: "Ijtimoiy tarmoqlarni yuritadi", textRu: "Ведет социальные сети", careerId: 10 },
-      { textUz: "Biznes yurituvchi shaxs", textRu: "Человек, ведущий бизнес", careerId: 9 },
+      { textUz: "Maqsad, xarajat va rivojlanish yo‘nalishini belgilash uchun", textRu: "Для определения целей, расходов и направления развития", careerId: 9 },
       { textUz: "Video suratga oladi", textRu: "Снимает видео", careerId: 11 },
       { textUz: "Suratga oladi", textRu: "Фотографирует", careerId: 12 }
     ]
