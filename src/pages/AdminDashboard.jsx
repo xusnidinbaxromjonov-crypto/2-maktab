@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
-import { Users, UserCheck, UserX, LogOut, Search, Eye } from 'lucide-react';
+import { Users, UserCheck, UserX, LogOut, Search, Eye, Download } from 'lucide-react';
 import StudentDetails from '../components/StudentDetails';
 
 export default function AdminDashboard() {
@@ -53,19 +53,29 @@ export default function AdminDashboard() {
 
   const fetchStudents = async () => {
     setLoading(true);
+    const adminSchool = localStorage.getItem('admin_school');
+
     if (!import.meta.env.VITE_SUPABASE_URL) {
       // Mock data from localStorage
       const mockStudents = JSON.parse(localStorage.getItem('mock_students') || '[]');
-      // Sort by oldest first
       mockStudents.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-      setStudents(mockStudents);
+      
+      if (adminSchool && adminSchool !== 'all') {
+        setStudents(mockStudents.filter(s => s.phone === adminSchool));
+      } else {
+        setStudents(mockStudents);
+      }
+      
       setLoading(false);
       return;
     }
-    const { data, error } = await supabase
-      .from('students')
-      .select('*')
-      .order('created_at', { ascending: true });
+    
+    let query = supabase.from('students').select('*').order('created_at', { ascending: true });
+    if (adminSchool && adminSchool !== 'all') {
+      query = query.eq('phone', adminSchool);
+    }
+
+    const { data, error } = await query;
       
     if (!error && data) {
       setStudents(data);
@@ -99,10 +109,39 @@ export default function AdminDashboard() {
     return true;
   });
 
+  const handleExportCSV = () => {
+    // Add BOM for UTF-8 to display Cyrillic/Uzbek characters properly in Excel
+    let csvContent = "\uFEFF";
+    csvContent += "N,Ism,Familiya,Maktab,Sinf,Sana,Holat,Qiziqishi\n";
+    
+    filteredStudents.forEach((s, idx) => {
+      const row = [
+        idx + 1,
+        `"${s.first_name || ''}"`,
+        `"${s.last_name || ''}"`,
+        `"${s.school || s.phone || ''}"`,
+        `"${s.class || ''}"`,
+        `"${new Date(s.created_at).toLocaleDateString()}"`,
+        `"${s.test_completed ? 'Tugagan' : 'Tugallanmagan'}"`,
+        `"${s.test_completed ? (s.interest_area || '') : '-'}"`
+      ];
+      csvContent += row.join(",") + "\n";
+    });
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `oquvchilar_${new Date().toLocaleDateString()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f9fafb' }}>
+    <div className="admin-layout">
       {/* Sidebar */}
-      <div style={{ width: '250px', background: 'white', borderRight: '1px solid #e5e7eb', padding: '24px', display: 'flex', flexDirection: 'column' }}>
+      <div className="admin-sidebar">
         <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--primary)', marginBottom: '32px' }}>
           Admin Panel
         </h2>
@@ -111,6 +150,12 @@ export default function AdminDashboard() {
           <button style={{ ...sidebarBtnStyle, background: 'var(--primary)', color: 'white' }}>
             <Users size={18} /> Dashboard
           </button>
+          {localStorage.getItem('admin_school') !== 'all' && (
+            <div style={{ padding: '12px 16px', background: '#f3f4f6', borderRadius: '8px', fontSize: '0.875rem', color: '#4b5563' }}>
+              <strong>Maktab:</strong><br/>
+              {localStorage.getItem('admin_school')}
+            </div>
+          )}
         </div>
         
         <button onClick={handleLogout} style={{ ...sidebarBtnStyle, color: 'var(--danger)' }}>
@@ -119,11 +164,11 @@ export default function AdminDashboard() {
       </div>
 
       {/* Main Content */}
-      <div style={{ flex: 1, padding: '32px', overflowY: 'auto' }}>
+      <div className="admin-content">
         <h1 style={{ fontSize: '1.75rem', marginBottom: '24px' }}>Statistika</h1>
         
         {/* Stats Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '40px' }}>
+        <div className="admin-stats-grid">
           <StatCard title="Jami o'quvchilar" value={total} icon={<Users color="#6366f1" size={24} />} bg="#e0e7ff" />
           <StatCard title="Bugun ro'yxatdan o'tganlar" value={registeredToday} icon={<Users color="#10b981" size={24} />} bg="#d1fae5" />
           <StatCard title="Testni tugatganlar" value={completed} icon={<UserCheck color="#8b5cf6" size={24} />} bg="#ede9fe" />
@@ -133,7 +178,7 @@ export default function AdminDashboard() {
 
 
         {/* Table Section */}
-        <div style={{ background: 'white', padding: '24px', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+        <div className="admin-table-container">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
             <h2 style={{ fontSize: '1.5rem' }}>O'quvchilar ro'yxati</h2>
             <div style={{ display: 'flex', gap: '16px' }}>
@@ -155,11 +200,23 @@ export default function AdminDashboard() {
                 <option value="completed">Testni tugatgan</option>
                 <option value="not_completed">Testni tugatmagan</option>
               </select>
+              <button 
+                onClick={handleExportCSV}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '8px', border: 'none', background: '#10b981', color: 'white', cursor: 'pointer', fontWeight: '500' }}
+              >
+                <Download size={18} /> Yuklab olish
+              </button>
             </div>
           </div>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '24px' }}>
-            {['all', '7A', '7B', '7V', '8A', '8B', '8V', '9A', '9B', '9V', '10A', '10B', '10V', '11A', '11B', '11V'].map(cls => (
+            {['all', 
+              '5-A', '5-B', '5-D', '5-E', '5-G', '5-V', 
+              '6-A', '6-B', '6-D', '6-E', '6-G', '6-V', 
+              '7-A', '7-B', '7-D', '7-E', '7-G', '7-V', 
+              '8-A', '8-B', '8-D', '8-E', '8-G', '8-V', 
+              '9-A', '9-B', '9-D', '9-E', '9-G', '9-V'
+            ].map(cls => (
               <button 
                 key={cls}
                 onClick={() => setClassFilter(cls)}
@@ -187,7 +244,7 @@ export default function AdminDashboard() {
                   <th style={{ padding: '12px' }}>№</th>
                   <th style={{ padding: '12px' }}>Ism</th>
                   <th style={{ padding: '12px' }}>Familiya</th>
-                  <th style={{ padding: '12px' }}>Telefon</th>
+                  <th style={{ padding: '12px' }}>Maktab</th>
                   <th style={{ padding: '12px' }}>Sinf</th>
                   <th style={{ padding: '12px' }}>Sana</th>
                   <th style={{ padding: '12px' }}>Holat</th>
@@ -201,7 +258,7 @@ export default function AdminDashboard() {
                     <td style={{ padding: '12px' }}>{idx + 1}</td>
                     <td style={{ padding: '12px' }}>{s.first_name}</td>
                     <td style={{ padding: '12px' }}>{s.last_name}</td>
-                    <td style={{ padding: '12px' }}>{s.phone}</td>
+                    <td style={{ padding: '12px' }}>{s.school || s.phone}</td>
                     <td style={{ padding: '12px' }}>{s.class}</td>
                     <td style={{ padding: '12px' }}>{new Date(s.created_at).toLocaleDateString()}</td>
                     <td style={{ padding: '12px' }}>
